@@ -10,6 +10,6 @@ public class App
     {
         System.out.println( "Hello World!" );
         System.out.println( "Hello git ,i try to use IDE to pull my project"
-        		+ "i wish everything goes well test again!" );
+        		+ "i wish everything goes well test again!    rrrrrrr" );
     }
 }
