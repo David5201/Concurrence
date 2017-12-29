@@ -3,13 +3,17 @@ package io.github.viscent.mtia.util.stf;
 import java.lang.reflect.Method;
 import java.util.Observer;
 import java.util.SortedMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
+@ConcurrencyTest
 public class TestRunner {
 	private static final Semaphore FLOW_CONTROL = new Semaphore(Runtime
 			.getRuntime().availableProcessors());
@@ -38,6 +42,7 @@ public class TestRunner {
 					
     public TestRunner(Method publishMethod, Method observerMethod,
             Method setupMethod, Object testCase) {
+    	
     	this.publishMethod = publishMethod;
         this.observerMethod = observerMethod;
         this.setupMethod = setupMethod;
@@ -51,6 +56,7 @@ public class TestRunner {
   
     public static void runTest(Class<?> testCaseClazz)	
     		throws InstantiationException, IllegalAccessException {
+    
     	Object test = testCaseClazz.newInstance();
     	Method publishMethod = null;
         Method observerMethod = null;
