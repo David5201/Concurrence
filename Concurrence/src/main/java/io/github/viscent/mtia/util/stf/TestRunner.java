@@ -2,6 +2,9 @@ package io.github.viscent.mtia.util.stf;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -202,7 +205,19 @@ public class TestRunner {
     }
     
     protected void report() {
-    	
+    	ExpectInfo ei;
+    	StringBuilder sbd = new StringBuilder();
+    	sbd.append("\n\r<<Simple Concurrency Test Framework report>>:");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss E");
+		sbd.append("\n\r===========================" + sdf.format(new Date())
+	     + "=================================");
+		for (Map.Entry<Integer, ExpectInfo> entry : expectMap.entrySet()) {
+	         ei = entry.getValue();
+	         sbd.append("\n\rexpected:" + entry.getKey() + "		occurrences:"
+	                 + ei.count() + "		==>" + ei.description);
+	     } 
+		sbd.append("\n\r=====================================END=============================================");
+	        System.out.println(sbd);
     }
 					
     private static class ExpectInfo{

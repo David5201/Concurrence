@@ -3,6 +3,8 @@ package io.github.viscent.mtia.ch2;
 import io.github.viscent.mtia.util.stf.Actor;
 import io.github.viscent.mtia.util.stf.ConcurrencyTest;
 import io.github.viscent.mtia.util.stf.Expect;
+import io.github.viscent.mtia.util.stf.Observer;
+import io.github.viscent.mtia.util.stf.TestRunner;
 
 
 /**
@@ -19,7 +21,7 @@ public class JITReorderingDemo {
 	public static void main(String[] args) throws InstantiationException, 
 				IllegalAccessException{
 		
-		
+		TestRunner.runTest(JITReorderingDemo.class);
 
 	}
 	
@@ -29,7 +31,6 @@ public class JITReorderingDemo {
     }
 	
 	@Observer({
-		
 		@Expect(desc="Helper is null",  expected = -1),
 		@Expect(desc = "Helper is not null,but it is not initialized",
         expected = 0),
