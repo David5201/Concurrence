@@ -1,8 +1,9 @@
 package io.github.viscent.mtia.util.stf;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Observer;
 import java.util.SortedMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -20,14 +21,14 @@ public class TestRunner {
 	
 	private static final ExecutorService EXECUTOR_SERVICE = Executors
 			.newCachedThreadPool(new ThreadFactory(){
-				
-				@Override
-				public Thread newThread(Runnable r){
+
+				public Thread newThread(Runnable r) {
 					Thread t = new Thread(r);
 					t.setPriority(Thread.MAX_PRIORITY);
 					t.setDaemon(false);
 					return t;
 				}
+				
 			});
 					
 	private final AtomicInteger runs = new AtomicInteger(0);				
@@ -93,7 +94,114 @@ public class TestRunner {
         }
         return map;
     }
+  
+    protected void doTest() {
+    	Runnable publishTask = new Runnable(){
+
+			public void run() {
+				 try {
+	                    publishMethod.invoke(testCase, new Object[]{});
+	                } catch (IllegalAccessException e) {
+	                    e.printStackTrace();
+	                } catch (IllegalArgumentException e) {
+	                    e.printStackTrace();
+	                } catch (InvocationTargetException e) {
+	                    e.printStackTrace();
+	                } finally {
+	                    FLOW_CONTROL.release(1);
+	                }
+			}
+    		
+    	};
+    	
+    	Runnable observerTask = new Runnable() {
+
+			@SuppressWarnings("unchecked")
+			public void run() {
+				try {
+					int result = -1;
+					try {
+						result = Integer.valueOf(observerMethod.invoke(testCase,
+                                new Object[]{}).toString());
+						ExpectInfo expectInfo = expectMap.get(Integer.valueOf(result));
+						if (null != expectInfo) {
+                            expectInfo.hit();
+                        }else {
+                        	expectInfo = new ExpectInfo("unexpected", 1);
+                            ((ConcurrentMap<Integer, ExpectInfo>) expectMap).putIfAbsent(
+                                    result, expectInfo);
+                        }
+						
+					}catch (IllegalAccessException e) {
+					   e.printStackTrace();
+					}catch (IllegalArgumentException e) {
+					   e.printStackTrace();
+					}catch (InvocationTargetException e) {
+					   e.printStackTrace();
+					}
+					
+				}finally {
+                    FLOW_CONTROL.release(1);
+                }
+				
+			}
+    		
+    	};
+    	
+    	
+    	CountDownLatch latch;
+    	while (!stop) {
+    		latch = createLatch();
+    		 if (null != setupMethod) {
+                 try {
+                     setupMethod.invoke(testCase, new Object[]{});
+                 } catch (Exception e) {
+                     break;
+                 }
+             }
+
+             schedule(observerTask, latch);
+             schedule(publishTask, latch);
+             if (runs.incrementAndGet() >= iterations) {
+                 break;
+             }
+             if (thinkTime > 0) {
+                 Tools.randomPause(thinkTime);
+             }
+             
+             try {
+                 latch.await();
+             } catch (InterruptedException e) {
+                 ;
+             }
+    		
+    	}
+    	EXECUTOR_SERVICE.shutdown();
+    	try {
+            EXECUTOR_SERVICE.awaitTermination(2000, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            ;
+        }
+    	
+    	report();
+    }
     
+    private CountDownLatch createLatch() {
+    	CountDownLatch latch;
+    	if (null != setupMethod) {
+            latch = new CountDownLatch(2);
+        } else {
+            latch = new DummyLatch(2);
+        }
+    	return latch;
+    }
+    protected void schedule(final Runnable task, final CountDownLatch latch) {
+    	
+    }
+    
+    protected void report() {
+    	
+    }
 					
     private static class ExpectInfo{
     	public final String description;
